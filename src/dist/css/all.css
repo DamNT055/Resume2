@@ -9786,6 +9786,9 @@ textarea.form-control-lg {
   .d-print-none {
     display: none !important; } }
 
+body {
+  font-size: 12px; }
+
 .myfooter {
   background-color: #007bff;
   color: #ffc107;
