@@ -3,35 +3,20 @@ const sass = require("node-sass");
 module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON("package.json"),
-    watch: {
-      scss: {
-        files: ["src/scss/*.scss"],
-        tasks: ["b-css"],
-      },
-      js: {
-        files: ["src/js/*.js"],
-        tasks: ["b-js"],
+    concat: {
+      build: {
+        files: {
+          "src/tmp/all.js": ["src/js/ab.js", "src/js/resume.js"],
+        },
       },
     },
-    // ANCHOR - JS
     jshint: {
       options: {
         "-W015": true,
         esversion: 6,
       },
       build: {
-        src: ["src/js/*.js"],
-      },
-    },
-    concat: {
-      options: {
-        process: function (src) {
-          return src.replace(/^(export|import).*/gm, "");
-        },
-      },
-      bootstrap: {
-        src: ["node_modules/bootstrap/dist/js/bootstrap.js", "src/js/*.js"],
-        dest: "src/tmp/all.js",
+        src: ["src/tmp/all.js"],
       },
     },
     babel: {
@@ -39,27 +24,26 @@ module.exports = function (grunt) {
         presets: ["@babel/preset-env"],
       },
       build: {
-        options: {
-          presets: ["@babel/preset-env"],
-        },
         files: {
-          "src/tmp/babel.js": "src/tmp/all.js",
+          "src/tmp/all_back.js": "src/tmp/all.js",
         },
       },
     },
     uglify: {
       options: {
         banner:
-          '/*! The first line in file \n <%= pkg.name %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n',
+          '/*! Dòng này chèn vào đầu file <%= pkg.name %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n',
       },
       build: {
         files: {
-          "src/dist/js/all.min.js": ["src/tmp/babel.js"],
+          "src/build/<%= pkg.name %>.min.js": ["src/tmp/all_back.js"],
         },
       },
       debug: {
         files: {
-          "src/debug/babel_debug.min.js": ["src/js/*.js"],
+          "src/debug/<%= pkg.name %>_debug.min.js": [
+            "src/js/<%= pkg.name %>.js",
+          ],
         },
       },
     },
@@ -68,8 +52,12 @@ module.exports = function (grunt) {
         src: ["src/tmp/*"],
       },
     },
-    // ANCHOR - End JS
-    // ANCHOR - Css
+    watch: {
+      src: {
+        files: ["src/**/*.js"],
+        tasks: ["default"],
+      },
+    },
     sass: {
       options: {
         implementation: sass,
@@ -77,7 +65,7 @@ module.exports = function (grunt) {
       },
       build: {
         files: {
-          "src/dist/css/all.css": "src/scss/all.scss",
+          "src/css/all.css": "src/scss/all.scss",
         },
       },
     },
@@ -88,7 +76,7 @@ module.exports = function (grunt) {
       },
       build: {
         files: {
-          "src/dist/css/all.min.css": "src/dist/css/all.css",
+          "src/css/all.min.css": "src/css/all.css",
         },
       },
     },
@@ -97,10 +85,9 @@ module.exports = function (grunt) {
         processors: [require("pixrem")(), require("autoprefixer")({})],
       },
       build: {
-        src: "src/dist/css/all.css",
+        src: "src/css/all.css",
       },
     },
-    // ANCHOR - End css
   });
   grunt.loadNpmTasks("grunt-babel");
   grunt.loadNpmTasks("grunt-contrib-concat");
@@ -112,17 +99,15 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks("grunt-contrib-cssmin");
   grunt.loadNpmTasks("grunt-postcss");
 
-  grunt.registerTask("b-sass", ["sass"]);
-  grunt.registerTask("b-css", ["sass", "postcss", "cssmin"]);
-  grunt.registerTask("b-js", [
-    "jshint",
-    "concat",
+  grunt.registerTask("default", ["sass", "postcss", "cssmin"]);
+  grunt.registerTask("runw", ["watch"]);
+
+  grunt.registerTask("runcss", ["sass"]);
+  grunt.registerTask("runjs", [
+    "concat:build",
+    "jshint:build",
     "babel:build",
-    "uglify",
+    "uglify:build",
     "clean",
   ]);
-  grunt.registerTask("runwatch", ["watch"]);
-  grunt.registerTask("dev", "Dev run", function () {
-    grunt.task.run(["b-css", "b-js"]);
-  });
 };
